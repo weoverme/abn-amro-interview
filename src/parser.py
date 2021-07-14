@@ -198,17 +198,10 @@ class Parser:
             product = t.get_unique_product_information()
 
             if not self.is_product_present(t):
-                self.client_transactions[unique_client][product] = {}
+                # If new, set product value = 0, as this should hold the net total
+                self.client_transactions[unique_client][product] = 0
 
-            # Separate transaction by date
-            if not self.is_transaction_date_present(t):
-                # If new date, set up new transaction_date dict
-                self.client_transactions[unique_client][product][t.transaction_date] = 0
-            else:
-                # Add to total_transaction_amount for that day
-                self.client_transactions[unique_client][product][t.transaction_date] += t.calculate_net_total()
-
-
+            self.client_transactions[unique_client][product] += t.calculate_net_total()
 
 
 
