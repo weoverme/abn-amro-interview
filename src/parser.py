@@ -53,7 +53,10 @@ import sys
 
 # fpath = sys.argv[1]
 
-class Record:
+class Transaction:
+    """
+
+    """
     def __init__(self, f_line):
         self.line = f_line
         self.client_type = self.get_client_type()
@@ -140,7 +143,8 @@ class Record:
         ticket_num = MAPPING["TICKET NUMBER"]
         return self.line[ticket_num["char_start"]:ticket_num["char_end"]]
 
-
+    def calculate_net_total(self):
+        net_total = int(self.get_qty_long()) - int(self.get_qty_short())
 
 
 
