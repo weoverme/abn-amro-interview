@@ -202,6 +202,7 @@ class Parser:
 
             self.client_transactions[unique_client][product] += t.calculate_net_total()
 
+
     def parse(self, delimiter):
         self.calculate_total_transaction_amount()
 
