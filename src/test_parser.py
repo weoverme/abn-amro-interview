@@ -1,19 +1,21 @@
 from unittest import TestCase
-from src.parser import Transaction
+from unittest.mock import MagicMock, mock_open
 
+from src.parser import Transaction, Parser
 
-class TestRecord(TestCase):
+class TestTransaction(TestCase):
     def setUp(self):
         self.test_line = "315CL  432100020001SGXDC FUSGX NK    20100910JPY01B 0000000001 0000000000000000000060DUSD000000000030DUSD000000000000DJPY201008200012380     688032000092500000000             O"
         self.transaction = Transaction(self.test_line)
 
+
     def test_init(self):
         self.assertIsNotNone(self.transaction)
 
-class TestClientInformation(TestRecord):
+class TestClientInformation(TestTransaction):
 
     def test_get_client_type(self):
-        self.assertTrue("315", self.transaction.get_client_type())
+        self.assertTrue("CL", self.transaction.get_client_type())
 
     def test_get_client_number(self):
         self.assertTrue("4321", self.transaction.get_client_number())
@@ -24,7 +26,7 @@ class TestClientInformation(TestRecord):
     def test_get_client_subacc(self):
         self.assertTrue("0001", self.transaction.get_client_subacc())
 
-class TestProductInformation(TestRecord):
+class TestProductInformation(TestTransaction):
 
     def test_get_product_group(self):
         self.assertTrue("FU", self.transaction.get_product_group())
@@ -61,4 +63,22 @@ class TestProductInformation(TestRecord):
 
     def test_get_ticket_num(self):
         self.assertTrue("0", self.transaction.get_ticket_num())
+
+
+class TestTotalTransactionAmount(TestTransaction):
+
+    def test_calculate_net_total_positive(self):
+        self.transaction.get_qty_long = MagicMock(return_value="0000000001")
+        self.transaction.get_qty_short = MagicMock(return_value="0000000000")
+        self.assertEqual(1, self.transaction.calculate_net_total())
+
+    def test_calculate_net_total_zer0(self):
+        self.transaction.get_qty_long = MagicMock(return_value="0000000001")
+        self.transaction.get_qty_short = MagicMock(return_value="0000000001")
+        self.assertEqual(0, self.transaction.calculate_net_total())
+
+    def test_calculate_net_total_negative(self):
+        self.transaction.get_qty_long = MagicMock(return_value="0000000000")
+        self.transaction.get_qty_short = MagicMock(return_value="0000000001")
+        self.assertEqual(-1, self.transaction.calculate_net_total())
 
