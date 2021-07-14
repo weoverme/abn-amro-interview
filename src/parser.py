@@ -157,7 +157,8 @@ class Transaction:
 class Parser:
 
     def __init__(self, file_path):
-        self.f_transactions = open(file_path, "r").readlines()
+        with open(file_path, "r") as file:
+            self.f_transactions = file.readlines()
         self.client_transactions = {} # transactions grouped by unique combination of client type, number, acc, subacc
 
     def is_client_present(self, t):
@@ -205,18 +206,24 @@ class Parser:
 
     def parse(self, delimiter):
         self.calculate_total_transaction_amount()
-
-        # Gather output data
-        output_header = "CLIENT_INFORMATION%sPRODUCT_INFORMATION%sTOTAL_TRANSACTION_AMOUNT\n" %(delimiter, delimiter)
-        output = ""
-        for client in self.client_transactions.keys():
-            for product in self.client_transactions[client].keys():
-                product_total_transaction_amount = self.client_transactions[client][product]
-                output += "%s%s%s%s%s\n" %(client, delimiter, product, delimiter, product_total_transaction_amount)
+        #
+        # # Gather output data
+        # output_header = "CLIENT_INFORMATION%sPRODUCT_INFORMATION%sTOTAL_TRANSACTION_AMOUNT\n" %(delimiter, delimiter)
+        # output = ""
+        # for client in self.client_transactions.keys():
+        #     for product in self.client_transactions[client].keys():
+        #         product_total_transaction_amount = self.client_transactions[client][product]
+        #         output += "%s%s%s%s%s\n" % (client, delimiter, product, delimiter, product_total_transaction_amount)
 
         # Output to file
-#        f_output = open("../res/Output.txt", "w+")
-        print(output)
+        with open("../res/Output.txt", "w+") as f_output:
+            f_output.write("CLIENT_INFORMATION%sPRODUCT_INFORMATION%sTOTAL_TRANSACTION_AMOUNT\n" % (delimiter, delimiter))
+            for client in self.client_transactions.keys():
+                for product in self.client_transactions[client].keys():
+                    product_total_transaction_amount = self.client_transactions[client][product]
+                    f_output.write("%s%s%s%s%s\n" % (client, delimiter, product, delimiter, product_total_transaction_amount))
+
+
 
 if __name__ == "__main__":
     path = "../res/Input.txt"
