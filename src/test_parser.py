@@ -1,16 +1,17 @@
 from unittest import TestCase
-from unittest.mock import MagicMock, mock_open
+from unittest.mock import MagicMock, mock_open, patch
 
 from src.parser import Transaction, Parser
+
 
 class TestTransaction(TestCase):
     def setUp(self):
         self.test_line = "315CL  432100020001SGXDC FUSGX NK    20100910JPY01B 0000000001 0000000000000000000060DUSD000000000030DUSD000000000000DJPY201008200012380     688032000092500000000             O"
         self.transaction = Transaction(self.test_line)
 
-
     def test_init(self):
         self.assertIsNotNone(self.transaction)
+
 
 class TestClientInformation(TestTransaction):
 
@@ -25,6 +26,7 @@ class TestClientInformation(TestTransaction):
 
     def test_get_client_subacc(self):
         self.assertTrue("0001", self.transaction.get_client_subacc())
+
 
 class TestProductInformation(TestTransaction):
 
@@ -82,3 +84,24 @@ class TestTotalTransactionAmount(TestTransaction):
         self.transaction.get_qty_short = MagicMock(return_value="0000000001")
         self.assertEqual(-1, self.transaction.calculate_net_total())
 
+
+class TestParser(TestCase):
+    def setUp(self):
+        test_line = "315CL  432100020001SGXDC FUSGX NK    20100910JPY01B 0000000001 0000000000000000000060DUSD000000000030DUSD000000000000DJPY201008200012380     688032000092500000000             O"
+        m = mock_open(read_data=test_line)
+        self.parser = Parser(m)
+
+    def test_is_client_present(self):
+        self.fail()
+
+    def test_is_product_present(self):
+        self.fail()
+
+    def test_is_transaction_date_present(self):
+        self.fail()
+
+    def test_calculate_total_transaction_amount(self):
+        self.fail()
+
+    def test_parse(self):
+        self.fail()

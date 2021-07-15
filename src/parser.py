@@ -1,3 +1,6 @@
+import logging
+import time
+
 MAPPING = {
     "CLIENT TYPE": {
         "ref":2, "length": 4, "char_start": 4, "char_end": 7
@@ -31,9 +34,8 @@ MAPPING = {
     }
 }
 
-import sys
+logging.basicConfig(filename="../log/parser.log", format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', level=logging.WARNING)
 
-# fpath = sys.argv[1]
 
 class Transaction:
     """
@@ -54,7 +56,7 @@ class Transaction:
 
         self.qty_long = self.get_qty_long()
         self.qty_short = self.get_qty_short()
-
+        logging.info(f"Created new Transaction.")
 
     def get_client_type(self):
         c_type = MAPPING["CLIENT TYPE"]
@@ -97,10 +99,10 @@ class Transaction:
         return self.line[qty_short["char_start"]-1:qty_short["char_end"]]
 
     def get_unique_client_information(self):
-        return "%s_%s_%s_%s" % (self.client_type, self.client_number, self.client_acc, self.client_subacc)
+        return f"{self.client_type}_{self.client_number}_{self.client_acc}_{self.client_subacc}"
 
     def get_unique_product_information(self):
-        return "%s_%s_%s_%s" % (self.exch_code, self.product_group, self.symbol, self.exp_date)
+        return f"{self.exch_code}_{self.product_group}_{self.symbol}_{self.exp_date}"
 
     def calculate_net_total(self):
         net_total = int(self.get_qty_long()) - int(self.get_qty_short())
@@ -110,10 +112,14 @@ class Transaction:
 class Parser:
 
     def __init__(self, file_path):
-        with open(file_path, "r") as file:
-            self.f_transactions = file.readlines()
+        try:
+            with open(file_path, "r") as file:
+                self.f_transactions = file.readlines()
+                logging.info(f"Opened '{file_path}'. There are {len(self.f_transactions)-1} transactions to be parsed.")
 
-        self.client_transactions = {}
+            self.client_transactions = {}
+        except FileNotFoundError:
+            logging.warning("Provided path is not a path.\n Try in format: \t\tparser.py path delimiter")
 
     def is_client_present(self, t):
         unique_client = t.get_unique_client_information()
@@ -147,6 +153,7 @@ class Parser:
             if not self.is_client_present(t):
                 # If new, set unique_client dict up
                 self.client_transactions[unique_client] = {}
+                logging.info(f"New client added to client transactions - {unique_client}")
 
             # Separate transaction by product
             product = t.get_unique_product_information()
@@ -154,22 +161,33 @@ class Parser:
             if not self.is_product_present(t):
                 # If new, set product value = 0, as this should hold the net total
                 self.client_transactions[unique_client][product] = 0
+                logging.info(f"New product added to client transactions - {product}")
 
             self.client_transactions[unique_client][product] += t.calculate_net_total()
 
-    def parse(self, delimiter):
+    def parse(self, outpath, delimiter):
+        logging.info(f"Delimiter set to {delimiter}")
         self.calculate_total_transaction_amount()
 
         # Output to file
-        with open("../res/Output.txt", "w+") as f_output:
+        with open(outpath, "w+") as f_output:
             f_output.write("CLIENT_INFORMATION%sPRODUCT_INFORMATION%sTOTAL_TRANSACTION_AMOUNT\n" % (delimiter, delimiter))
             for client in self.client_transactions.keys():
                 for product in self.client_transactions[client].keys():
                     product_total_transaction_amount = self.client_transactions[client][product]
-                    f_output.write("%s%s%s%s%s\n" % (client, delimiter, product, delimiter, product_total_transaction_amount))
-
+                    f_output.write(f"{client}{delimiter}{product}{delimiter}{product_total_transaction_amount}\n")
+        logging.info(f"Completed writing to output - {outpath}. Please check output.")
 
 if __name__ == "__main__":
-    path = "../res/Input.txt"
-    pr = Parser(path)
-    pr.parse(",")
+    import sys
+
+    try:
+        fpath = sys.argv[1]
+        outpath = sys.argv[2]
+        delimiter = sys.argv[3]
+
+        pr = Parser(fpath)
+
+        pr.parse(outpath, delimiter)
+    except IndexError:
+        print("Parser.py was expecting three args. \nFormat: python parser.py path_input path_output delimiter\nEx. python parser.py ../res/Input.txt ../res/Output.csv ,")
