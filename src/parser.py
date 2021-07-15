@@ -23,29 +23,11 @@ MAPPING = {
     "EXPIRY DATE": {
         "ref": 11,"length": 8, "char_start": 38, "char_end":45
     },
-    "CURRENCY CODE": {
-        "ref": 13,"length": 3, "char_start": 46, "char_end":48
-    },
-    "BUY SELL CODE": {
-        "ref": 15,"length": 1, "char_start": 51, "char_end":51
-    },
-    "MOVEMENT CODE": {
-        "ref": 14,"length": 2, "char_start": 49, "char_end":50
-    },
     "QTY LONG": {
         "ref": 16,"length": 10, "char_start": 53, "char_end":62
     },
     "QTY SHORT": {
         "ref": 17,"length": 10, "char_start": 64, "char_end":73
-    },
-    "TRANSACTION PRICE": {
-        "ref": 20,"length": 15, "char_start": 148, "char_end":162
-    },
-    "TRANSACTION DATE": {
-        "ref": 34,"length": 8, "char_start": 122, "char_end":129
-    },
-    "TICKET NUMBER": {
-        "ref": 37,"length": 37, "char_start": 136, "char_end":141
     }
 }
 
@@ -69,15 +51,10 @@ class Transaction:
         self.exch_code = self.get_exch_code()
         self.exp_date = self.get_expiry_date()
         self.symbol = self.get_symbol()
-        self.ccy_code = self.get_ccy_code()
 
-        self.buysell_code = self.get_buysell_code()
-        self.movement_code = self.get_movement_code()
         self.qty_long = self.get_qty_long()
         self.qty_short = self.get_qty_short()
 
-        self.transaction_price = self.get_transaction_price()
-        self.transaction_date = self.get_transaction_date()
 
     def get_client_type(self):
         c_type = MAPPING["CLIENT TYPE"]
@@ -111,18 +88,6 @@ class Transaction:
         c_expiry = MAPPING["EXPIRY DATE"]
         return self.line[c_expiry["char_start"]-1:c_expiry["char_end"]].strip(" ")
 
-    def get_ccy_code(self):
-        t_ccy = MAPPING["CURRENCY CODE"]
-        return self.line[t_ccy["char_start"]-1:t_ccy["char_end"]].strip(" ")
-
-    def get_buysell_code(self):
-        buysell = MAPPING["BUY SELL CODE"]
-        return self.line[buysell["char_start"]-1].strip(" ")
-
-    def get_movement_code(self):
-        movement = MAPPING["MOVEMENT CODE"]
-        return self.line[movement["char_start"]-1:movement["char_end"]].strip(" ")
-
     def get_qty_long(self):
         qty_long = MAPPING["QTY LONG"]
         return self.line[qty_long["char_start"]-1:qty_long["char_end"]]
@@ -130,18 +95,6 @@ class Transaction:
     def get_qty_short(self):
         qty_short = MAPPING["QTY SHORT"]
         return self.line[qty_short["char_start"]-1:qty_short["char_end"]]
-
-    def get_transaction_date(self):
-        t_date = MAPPING["TRANSACTION DATE"]
-        return self.line[t_date["char_start"]-1:t_date["char_end"]].strip(" ")
-
-    def get_transaction_price(self):
-        t_price = MAPPING["TRANSACTION PRICE"]
-        return "{:.7f}".format(int(self.line[t_price["char_start"]-1:t_price["char_end"]])/10000000)
-
-    def get_ticket_num(self):
-        ticket_num = MAPPING["TICKET NUMBER"]
-        return self.line[ticket_num["char_start"]-1:ticket_num["char_end"]].strip(" ")
 
     def get_unique_client_information(self):
         return "%s_%s_%s_%s" % (self.client_type, self.client_number, self.client_acc, self.client_subacc)
@@ -159,7 +112,8 @@ class Parser:
     def __init__(self, file_path):
         with open(file_path, "r") as file:
             self.f_transactions = file.readlines()
-        self.client_transactions = {} # transactions grouped by unique combination of client type, number, acc, subacc
+
+        self.client_transactions = {}
 
     def is_client_present(self, t):
         unique_client = t.get_unique_client_information()
@@ -203,17 +157,8 @@ class Parser:
 
             self.client_transactions[unique_client][product] += t.calculate_net_total()
 
-
     def parse(self, delimiter):
         self.calculate_total_transaction_amount()
-        #
-        # # Gather output data
-        # output_header = "CLIENT_INFORMATION%sPRODUCT_INFORMATION%sTOTAL_TRANSACTION_AMOUNT\n" %(delimiter, delimiter)
-        # output = ""
-        # for client in self.client_transactions.keys():
-        #     for product in self.client_transactions[client].keys():
-        #         product_total_transaction_amount = self.client_transactions[client][product]
-        #         output += "%s%s%s%s%s\n" % (client, delimiter, product, delimiter, product_total_transaction_amount)
 
         # Output to file
         with open("../res/Output.txt", "w+") as f_output:
@@ -224,23 +169,7 @@ class Parser:
                     f_output.write("%s%s%s%s%s\n" % (client, delimiter, product, delimiter, product_total_transaction_amount))
 
 
-
 if __name__ == "__main__":
     path = "../res/Input.txt"
     pr = Parser(path)
-    #pr.calculate_total_transaction_amount()
-
-    for k in pr.client_transactions.keys():
-        total = 0
-        for v in pr.client_transactions[k]:
-            attrs = vars(v)
-            print(', '.join("%s: %s" % item for item in attrs.items()))
-
-        break
-            #
-            # print(v.client_type, v.client_number, v.acc)
-            # total += v.calculate_net_total()
-            # print("%s - %s" %(v.buysell_code, v.calculate_net_total()))
-        # print("Key: %s, Values: %s" %(k, total))
-
     pr.parse(",")
